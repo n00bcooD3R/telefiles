@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
 
+export const runtime = 'edge';
+
 /**
  * GET /api/albums
  * Lists albums or lists files inside a specific album.

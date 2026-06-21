@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
 
+export const runtime = 'edge';
+
 /**
  * GET /api/settings
  * Retrieves current Telegram settings (masked for security).

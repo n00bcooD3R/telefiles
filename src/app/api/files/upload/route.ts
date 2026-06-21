@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db';
 import { uploadToTelegram } from '@/lib/telegram';
 import { auth } from '@clerk/nextjs/server';
 
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {

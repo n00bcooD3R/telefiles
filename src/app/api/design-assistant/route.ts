@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
 import { auth } from '@clerk/nextjs/server';
 
-const execAsync = promisify(exec);
+export const runtime = 'edge';
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,12 +18,42 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
 
+    // Attempt to load child_process dynamically (Node.js local runtime only)
+    let execAsync: any = null;
+    try {
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      execAsync = promisify(exec);
+    } catch (e) {
+      // child_process not available on edge/Cloudflare Page runtime
+    }
+
+    if (!execAsync) {
+      // Return a helpful markdown fallback explanation on Cloudflare Pages edge runtime
+      return NextResponse.json({
+        success: true,
+        format: 'markdown',
+        data: `### AI Design Assistant (Edge Mode)
+
+The UI/UX Pro Max search engine runs on a local Python database parser. 
+In the serverless Cloudflare Pages environment, command-line Python execution is not supported.
+
+**To use the AI Design Assistant:**
+1. Run **privfiles** locally:
+   \`\`\`bash
+   npm run dev
+   \`\`\`
+2. Open the Design Assistant tab on your local dashboard at [http://localhost:3000/dashboard](http://localhost:3000/dashboard)
+3. Search, view, and copy premium color swatches, typography guidelines, and layout tokens directly into your project!
+`
+      });
+    }
+
     // Sanitize query to prevent command injection
     const sanitizedQuery = query.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim();
 
     // Determine target script path (located in .agent/skills/ui-ux-pro-max/scripts/search.py)
-    // The working directory for command runs is root, so relative path is fine.
-    const scriptPath = path.join('.agent', 'skills', 'ui-ux-pro-max', 'scripts', 'search.py');
+    const scriptPath = '.agent/skills/ui-ux-pro-max/scripts/search.py';
 
     let command = '';
     if (type === 'system') {
@@ -38,7 +65,7 @@ export async function GET(req: NextRequest) {
     console.log(`[Design Assistant] Executing command: ${command}`);
 
     try {
-      const { stdout, stderr } = await execAsync(command);
+      const { stdout } = await execAsync(command);
 
       if (type === 'system') {
         return NextResponse.json({ success: true, format: 'markdown', data: stdout });
@@ -47,14 +74,13 @@ export async function GET(req: NextRequest) {
           const jsonData = JSON.parse(stdout);
           return NextResponse.json({ success: true, format: 'json', data: jsonData });
         } catch {
-          // If JSON parse fails, return as raw string
           return NextResponse.json({ success: true, format: 'text', data: stdout });
         }
       }
     } catch (execError: any) {
       console.error('[Design Assistant Exec Error]:', execError);
       
-      // Fallback to python3 if python is not in PATH (some Windows environments have only python3 mapped)
+      // Fallback to python3 if python is not in PATH (some systems map python3 exclusively)
       try {
         let fallbackCommand = '';
         if (type === 'system') {

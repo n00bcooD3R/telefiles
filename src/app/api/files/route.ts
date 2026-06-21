@@ -3,6 +3,8 @@ import { getDb } from '@/lib/db';
 import { deleteFromTelegram } from '@/lib/telegram';
 import { auth } from '@clerk/nextjs/server';
 
+export const runtime = 'edge';
+
 /**
  * GET /api/files
  * Fetch all tracked files. Supports search, category, and favorite filters.

@@ -3,6 +3,8 @@ import { getDb } from '@/lib/db';
 import { getTelegramFileUrl } from '@/lib/telegram';
 import { auth } from '@clerk/nextjs/server';
 
+export const runtime = 'edge';
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
