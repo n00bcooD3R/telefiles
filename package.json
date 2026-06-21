@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint"
   },
+  "overrides": {
+    "next": "$next"
+  },
   "dependencies": {
     "@clerk/nextjs": "^7.5.7",
     "bcryptjs": "^3.0.3",
